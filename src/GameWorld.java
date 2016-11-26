@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.util.Random;
 
 //TODO: Add more pixelTypes. Update ELEMENT_COUNT
@@ -8,8 +9,8 @@ public class GameWorld
     //Map of all the pixels on-screen
     //Send this to user interface component to update user-display
     //2Darray indices represent (x,y) coordinates of each pixels
-    final int PIXEL_MAP_HEIGHT = 500;
-    final int PIXEL_MAP_WIDTH = 500;
+    final int PIXEL_MAP_HEIGHT = 800/4;
+    final int PIXEL_MAP_WIDTH = 1240/4;
     Particle[][] pixelMap;//(0,0) coordinates are located at the top-left of the 2D array
     
     //General-use random variable
@@ -27,7 +28,9 @@ public class GameWorld
     boolean mouseWasDragged;//Turns "true" when the visual component indicates the mouse was dragged
     int draggedX1, draggedX2, draggedY1, draggedY2;//x,y coordinates of dragging mouse's the starting point and ending point
     
-    //Booleans to keep track of toggled options
+    //Variables to keep track of custom options
+    String penElement;
+    boolean penDragMode;
     boolean wallCollision;
     
     //Default constructor
@@ -35,9 +38,9 @@ public class GameWorld
     {
         //Initializes pixelMap with "Nothing" in all indices
         pixelMap = new Particle[PIXEL_MAP_WIDTH][PIXEL_MAP_HEIGHT];
-        for(int iY = PIXEL_MAP_HEIGHT; iY > 0; iY--){
+        for(int iY = PIXEL_MAP_HEIGHT-1; iY >= 0; iY--){
             for(int iX = 0; iX < PIXEL_MAP_WIDTH; iX++){
-                pixelMap[iX][iY] = new Particle("Nothing", "Black", true, iX, iY);
+                pixelMap[iX][iY] = new Particle("Nothing", Color.black, true, iX, iY);
             }
         }
         
@@ -51,6 +54,8 @@ public class GameWorld
         mouseWasDragged = false;
         
         //Initializes toggled option variables
+        penElement = "Wall";
+        penDragMode = false;
         wallCollision = false;
     }
     
@@ -59,7 +64,7 @@ public class GameWorld
     public void update(){
         
         //Updates each pixel on-screen, bottom to top, in horizontal layers
-        for(int iY = PIXEL_MAP_HEIGHT; iY > 0; iY--){
+        for(int iY = PIXEL_MAP_HEIGHT-1; iY >= 0; iY--){
             for(int iX = 0; iX < PIXEL_MAP_WIDTH; iX++){
                 
                 updatePixel(pixelMap[iX][iY]);
@@ -72,13 +77,41 @@ public class GameWorld
             }
         }
         
+        //Handles response to a mouse-click
+        if(mouseWasClicked)
+        {
+            switch(penElement)
+            {
+                case "Nothing":
+                    //If there's something in the target spot, replace it with nothing
+                    if(!pixelMap[clickedX][clickedY].name.equals("Nothing"))
+                    {
+                        pixelMap[clickedX][clickedY] = new Particle(clickedX, clickedY);
+                    }
+                    break;
+                case "Sand":
+                    //If there's nothing in the target spot, replace it with sand
+                    if(pixelMap[clickedX][clickedY].name.equals("Nothing"))
+                    {
+                        pixelMap[clickedX][clickedY] = new Particle("Sand", Color.lightGray, false, clickedX, clickedY);
+                    }
+                    break;
+                case "Wall":
+                    //If there's nothing in the target spot, replace it with wall
+                    if(pixelMap[clickedX][clickedY].name.equals("Nothing"))
+                    {
+                        pixelMap[clickedX][clickedY] = new Particle("Wall", Color.darkGray, true, clickedX, clickedY);
+                    }
+                    break;
+            }
+        }
     }
     
     //Updates the pixel space with the given particle
     //only considers pixel spaces below the given particle
     public void updatePixel(Particle thisPixel){
         //Change nothing if there's nothing in the pixel space
-        if(thisPixel.name == "Nothing")
+        if(thisPixel.name.equals("Nothing"))
         {
             return;
         } 
@@ -88,7 +121,7 @@ public class GameWorld
             return;
         }
         //Moves particle 1 pixel downward if there's nothing in the pixel space below and the particle is not at the bottom of the screen
-        else if(pixelMap[thisPixel.x][thisPixel.y+1].name == "Nothing" && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1){
+        else if(pixelMap[thisPixel.x][thisPixel.y+1].name.equals("Nothing") && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1){
             pixelMap[thisPixel.x][thisPixel.y+1] = pixelMap[thisPixel.x][thisPixel.y];
             pixelMap[thisPixel.x][thisPixel.y] = new Particle(thisPixel.x, thisPixel.y);
             pixelMap[thisPixel.x][thisPixel.y+1].y++;
@@ -102,7 +135,7 @@ public class GameWorld
             //Since there's an unreactive particle directly below, thisPixel randomly decides to try to slide left or slide right
             else if(randy.nextInt(2) == 0)
             {//Checks right side first
-                if(pixelMap[thisPixel.x+1][thisPixel.y+1].name == "Nothing" && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x+1 < PIXEL_MAP_WIDTH-1)
+                if(pixelMap[thisPixel.x+1][thisPixel.y+1].name.equals("Nothing") && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x+1 < PIXEL_MAP_WIDTH-1)
                 {
                     pixelMap[thisPixel.x+1][thisPixel.y+1] = pixelMap[thisPixel.x][thisPixel.y];
                     pixelMap[thisPixel.x][thisPixel.y] = new Particle(thisPixel.x, thisPixel.y);
@@ -115,7 +148,7 @@ public class GameWorld
                     particleInteract(pixelMap[thisPixel.x+1][thisPixel.y+1], pixelMap[thisPixel.x][thisPixel.y]);
                 }
                 //Checking left side
-                else if(pixelMap[thisPixel.x-1][thisPixel.y+1].name == "Nothing" && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x-1 > 0)
+                else if(pixelMap[thisPixel.x-1][thisPixel.y+1].name.equals("Nothing") && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x-1 > 0)
                 {
                     pixelMap[thisPixel.x-1][thisPixel.y+1] = pixelMap[thisPixel.x][thisPixel.y];
                     pixelMap[thisPixel.x][thisPixel.y] = new Particle(thisPixel.x, thisPixel.y);
@@ -130,7 +163,7 @@ public class GameWorld
             }
             else
             {//Checks left side first
-                if(pixelMap[thisPixel.x-1][thisPixel.y+1].name == "Nothing" && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x-1 > 0)
+                if(pixelMap[thisPixel.x-1][thisPixel.y+1].name.equals("Nothing") && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x-1 > 0)
                 {
                     pixelMap[thisPixel.x-1][thisPixel.y+1] = pixelMap[thisPixel.x][thisPixel.y];
                     pixelMap[thisPixel.x][thisPixel.y] = new Particle(thisPixel.x, thisPixel.y);
@@ -143,7 +176,7 @@ public class GameWorld
                     particleInteract(pixelMap[thisPixel.x-1][thisPixel.y+1], pixelMap[thisPixel.x][thisPixel.y]);
                 }
                 //Checking right side
-                else if(pixelMap[thisPixel.x+1][thisPixel.y+1].name == "Nothing" && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x+1 < PIXEL_MAP_WIDTH-1)
+                else if(pixelMap[thisPixel.x+1][thisPixel.y+1].name.equals("Nothing") && thisPixel.y+1 < PIXEL_MAP_HEIGHT-1 && thisPixel.x+1 < PIXEL_MAP_WIDTH-1)
                 {
                     pixelMap[thisPixel.x+1][thisPixel.y+1] = pixelMap[thisPixel.x][thisPixel.y];
                     pixelMap[thisPixel.x][thisPixel.y] = new Particle(thisPixel.x, thisPixel.y);

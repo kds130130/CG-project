@@ -1,9 +1,10 @@
 //Particle Class
 //Used as a structure object to store a sets of data for each in-game particle
+import java.awt.Color;
 public class Particle 
 {
     public String name;
-    public String color;
+    public Color color;
     
     //Pixel map coordinates
     public int x;
@@ -16,7 +17,7 @@ public class Particle
     public Particle()
     {
         name = "Nothing";
-        color = "Black";
+        color = Color.black;
         x = 0;
         y = 0;
         isStatic = false;
@@ -25,13 +26,13 @@ public class Particle
     public Particle(int xPos, int yPos)
     {
         name = "Nothing";
-        color = "Black";
+        color = Color.black;
         x = xPos;
         y = yPos;
         isStatic = false;
     }
     
-    public Particle(String particleName, String particleColor, boolean isItStatic)
+    public Particle(String particleName, Color particleColor, boolean isItStatic)
     {
         name = particleName;
         color = particleColor;
@@ -40,7 +41,7 @@ public class Particle
         isStatic = isItStatic;
     }
     
-    public Particle(String particleName, String particleColor, boolean isItStatic, int xPos, int yPos)
+    public Particle(String particleName, Color particleColor, boolean isItStatic, int xPos, int yPos)
     {
         name = particleName;
         color = particleColor;
