@@ -90,7 +90,8 @@ public class Display extends JFrame {
         frame.add(sm);
 
         //Timer for repetitive updating
-        int timeSlice = 50;  // updates the every assigned number of milliseconds
+        //Screen flickering issue when timeSlice is too small
+        int timeSlice = 120;  // updates the every assigned number of milliseconds
         Timer timer = new Timer(timeSlice,  (e) -> sm.repaint());
 
         // use pack to size the window appropriately (or can be manually set).
@@ -147,6 +148,10 @@ class sqFrame extends Canvas implements MouseListener{
                 drawPixel(gameWorld.pixelMap[iX][iY], gfx);
             }
         }*/
+        
+        //NOTE: This seems to eliminate the black "nothing" pixels on-screen
+        //Be aware that it's an area for potential issues with other methods
+        //Not that it needs fixing yet, since the program works fine
         for(Particle p : gameWorld.existingParticles)
         {
             drawPixel(p,gfx);
@@ -171,7 +176,9 @@ class sqFrame extends Canvas implements MouseListener{
     public void mouseClicked(MouseEvent e) {
 
     }
-
+    
+    //NOTE: The mouse can only spawn particles from a fixed position until the user tries clicking again
+    //Prefferable if the "paintbrush" followed the user's mouse while the mouse is pressed down. 
     public void mousePressed(MouseEvent e)
     {
         if(gameWorld.penDragMode)
@@ -180,6 +187,12 @@ class sqFrame extends Canvas implements MouseListener{
             Point pos = e.getPoint();
             startX = pos.x;
             startY = pos.y;
+        } 
+        else
+        {
+            Point pos = e.getPoint();
+            gameWorld.mouseClicked(pos.x/4, pos.y/4);//Starts spawning particles at fixed location
+            System.out.println(gameWorld.pixelMap[pos.x/4][pos.y/4].name);
         }
     }
 
@@ -189,12 +202,9 @@ class sqFrame extends Canvas implements MouseListener{
             mouseBeenDragging = false;
             Point pos = e.getPoint();
             gameWorld.mouseDragged(startX/4, startY/4, pos.x/4, pos.y/4);
-        } else if(!gameWorld.penDragMode)
+        }else if(!gameWorld.penDragMode)
         {
-            Point pos = e.getPoint();
-            gameWorld.mouseClicked(pos.x/4, pos.y/4);
-            System.out.println("Clicked: " + pos.x/4 + " " + pos.y/4);
-            System.out.println(gameWorld.pixelMap[pos.x/4][pos.y/4].name);
+            gameWorld.mouseWasClicked = false;//Stops spawning particles after mouse is released
         }
     }
 

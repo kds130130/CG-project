@@ -81,6 +81,9 @@ public class GameWorld
                 }
             }
         }*/
+        
+        //NOTE: Pixels should be updated in horizontal layers from bottom to top
+        //Not sure if this's updating that way, so sry for any misunderstandings
         for(Particle p : existingParticles)
         {
             updatePixel(p);
@@ -102,8 +105,6 @@ public class GameWorld
                         Particle p = new Particle(clickedX, clickedY);
                         pixelMap[clickedX][clickedY] = p;
                         // existingParticles.add(p);
-
-
                     }
                     break;
                 case "Sand":
@@ -243,7 +244,8 @@ public class GameWorld
         clickedY = y;
         mouseWasClicked = true;
     }
-
+    
+    
     //Called by Display when the mouse was dragged at a specific location on the pixel map
     //parameters accept the pixelMap coordinate at which the mouse started dragging and stopped dragging
     public void mouseDragged(int x1, int y1, int x2, int y2){
