@@ -1,21 +1,19 @@
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.Color;
-import java.awt.Canvas;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseEvent;
-import java.awt.Point;
+        import java.awt.*;
+        import java.awt.event.*;
+        import java.awt.geom.Ellipse2D;
+        import java.awt.geom.Line2D;
+        import java.util.ArrayList;
+        import java.util.Queue;
 
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
+        import javax.swing.BorderFactory;
+        import javax.swing.JPanel;
+        import javax.swing.JFrame;
+        import javax.swing.JMenu;
+        import javax.swing.JMenuBar;
+        import javax.swing.JMenuItem;
+        import javax.swing.SwingUtilities;
+        import javax.swing.Timer;
+        import javax.swing.JApplet;
 
 public class Display extends JFrame {
     static int count = 0;
@@ -29,6 +27,7 @@ public class Display extends JFrame {
     public static int yA, yB, yC, yD;
     public static int xAB, yAB;
     public static int yE, xE;
+
 
     private static final long serialVersionUID = 1L;
 
@@ -44,7 +43,10 @@ public class Display extends JFrame {
         });
 
     }
-
+    
+    
+    //NOTE: UI opens on full-screen, which causes errors when drawing outside of the "alllocated" draw-space
+    //Either we adjust the program to accomodate dynamic window-sizing, or we stick to windowed mode of designated size, or something else
     public static void createAndShowGUI() {
 
         // The inner workings of creating the specific window of the GUI
@@ -59,7 +61,15 @@ public class Display extends JFrame {
         JMenu menu = new JMenu("file");
         menuBar.add(menu);
         JMenuItem menuItem2 = new JMenuItem("Quit");
+        JMenuItem menuItem3 = new JMenuItem("Sand");
+        JMenuItem menuItem4 = new JMenuItem("Wall");
+        JMenuItem menuItem5 = new JMenuItem("Water");
+        JMenuItem menuItem6 = new JMenuItem("Plant");
         menu.add(menuItem2);
+        menu.add(menuItem3);
+        menu.add(menuItem4);
+        menu.add(menuItem5);
+        menu.add(menuItem6);
 
         // https://stackoverflow.com/questions/9778621/how-to-make-a-jmenu-item-do-something-when-its-clicked
         // for making a menu do something when clicked
@@ -72,6 +82,7 @@ public class Display extends JFrame {
 
         });
 
+
         JFrame frame = new JFrame("Sand Falling Game");
         frame.setJMenuBar(menuBar);
 
@@ -82,6 +93,26 @@ public class Display extends JFrame {
         // display the window
 
         final sqFrame sm = new sqFrame();
+        menuItem3.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                sm.gameWorld.changePenType("Sand");
+            }
+        });
+        menuItem4.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                sm.gameWorld.changePenType("Wall");
+            }
+        });
+        menuItem5.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                sm.gameWorld.changePenType("Water");
+            }
+        });
+        menuItem6.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                sm.gameWorld.changePenType("Plant");
+            }
+        });
 
 
 
@@ -90,15 +121,17 @@ public class Display extends JFrame {
         frame.add(sm);
 
         //Timer for repetitive updating
-        //Screen flickering issue when timeSlice is too small
-        int timeSlice = 120;  // updates the every assigned number of milliseconds
+        int timeSlice = 100;  // updates the every assigned number of milliseconds
         Timer timer = new Timer(timeSlice,  (e) -> sm.repaint());
 
         // use pack to size the window appropriately (or can be manually set).
         frame.pack();
-
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         // display the window
         frame.setVisible(true);
+
+
+
 
         timer.start();
     }
@@ -106,7 +139,7 @@ public class Display extends JFrame {
 }
 
 //Reads mouse input and paints user-display for the sand box
-class sqFrame extends Canvas implements MouseListener{
+class sqFrame extends Canvas implements MouseListener, MouseMotionListener{
     private static final long serialVersionUID = 1L;
     int xWindow = 1240;
     int yWindow = 800;
@@ -115,6 +148,13 @@ class sqFrame extends Canvas implements MouseListener{
     int[] tXPoints = new int[3];
     int[] tYPoints = new int[3];
 
+    private static final double RADIUS    = 15.0;
+    private static final double DIAMETER  = 2.0 * RADIUS;
+    private static final Color  XOR_COLOR = Color.yellow;
+
+    private static Shape m_circle = null;
+
+    ArrayList<Point> dragPointQueue = new ArrayList<Point>();
 
     //game logic object
     GameWorld gameWorld = new GameWorld();
@@ -123,9 +163,10 @@ class sqFrame extends Canvas implements MouseListener{
     boolean mouseBeenDragging;//True while the user is holding the mouse down with drag-mode on
     int startX, startY;//(x,y) coordinates of the point at which the user started holding the mouse down
 
-
+       
     public sqFrame(){
         addMouseListener(this);
+        addMouseMotionListener(this);
         mouseBeenDragging = false;
         startX = -1;
         startY = -1;
@@ -138,7 +179,6 @@ class sqFrame extends Canvas implements MouseListener{
     }
 
     public void paint(Graphics gfx){
-
         //Updates each pixel on-screen, bottom to top, in horizontal layers
 
         /*for(int iY = gameWorld.PIXEL_MAP_HEIGHT-1; iY >= 0; iY--)
@@ -148,21 +188,38 @@ class sqFrame extends Canvas implements MouseListener{
                 drawPixel(gameWorld.pixelMap[iX][iY], gfx);
             }
         }*/
-        
-        //NOTE: This seems to eliminate the black "nothing" pixels on-screen
-        //Be aware that it's an area for potential issues with other methods
-        //Not that it needs fixing yet, since the program works fine
         for(Particle p : gameWorld.existingParticles)
         {
             drawPixel(p,gfx);
         }
 
+        //Updates game variables
+        gameWorld.update();
+        Graphics2D g2     = (Graphics2D) getGraphics();
+        g2.draw(m_circle);
+    }
+   
+
+    public void paintComponent(Graphics gfx){
+        //Updates each pixel on-screen, bottom to top, in horizontal layers
+
+        /*for(int iY = gameWorld.PIXEL_MAP_HEIGHT-1; iY >= 0; iY--)
+        {
+            for(int iX = 0; iX < gameWorld.PIXEL_MAP_WIDTH; iX++)
+            {
+                drawPixel(gameWorld.pixelMap[iX][iY], gfx);
+            }
+        }*/
+        for(Particle p : gameWorld.existingParticles)
+        {
+            drawPixel(p,gfx);
+        }
 
         //Updates game variables
         gameWorld.update();
+        Graphics2D g2     = (Graphics2D) getGraphics();
+        g2.draw(m_circle);
     }
-
-
 
     //Draws pixel of the given type in the alloted pixelMap coordinate
     public void drawPixel(Particle thisParticle, Graphics gfx)
@@ -176,9 +233,7 @@ class sqFrame extends Canvas implements MouseListener{
     public void mouseClicked(MouseEvent e) {
 
     }
-    
-    //NOTE: The mouse can only spawn particles from a fixed position until the user tries clicking again
-    //Prefferable if the "paintbrush" followed the user's mouse while the mouse is pressed down. 
+
     public void mousePressed(MouseEvent e)
     {
         if(gameWorld.penDragMode)
@@ -187,12 +242,6 @@ class sqFrame extends Canvas implements MouseListener{
             Point pos = e.getPoint();
             startX = pos.x;
             startY = pos.y;
-        } 
-        else
-        {
-            Point pos = e.getPoint();
-            gameWorld.mouseClicked(pos.x/4, pos.y/4);//Starts spawning particles at fixed location
-            System.out.println(gameWorld.pixelMap[pos.x/4][pos.y/4].name);
         }
     }
 
@@ -202,11 +251,97 @@ class sqFrame extends Canvas implements MouseListener{
             mouseBeenDragging = false;
             Point pos = e.getPoint();
             gameWorld.mouseDragged(startX/4, startY/4, pos.x/4, pos.y/4);
-        }else if(!gameWorld.penDragMode)
+
+
+
+        }
+        else if(!gameWorld.penDragMode)
         {
-            gameWorld.mouseWasClicked = false;//Stops spawning particles after mouse is released
+            Point pos = e.getPoint();
+            int posx = pos.x/4;
+            int posy = pos.y/4;
+            gameWorld.mouseClicked(posx, posy);
+            gameWorld.mouseClicked(posx + 1, posy);
+            gameWorld.mouseClicked(posx, posy + 1);
+            gameWorld.mouseClicked(posx + 1, posy + 1);
+
+            gameWorld.mouseClicked(posx - 1, posy);
+            gameWorld.mouseClicked(posx, posy - 1);
+            gameWorld.mouseClicked(posx - 1, posy - 1);
+
+            gameWorld.mouseClicked(posx - 1, posy + 1);
+            gameWorld.mouseClicked(posx + 1, posy - 1);
+
+            System.out.println("Clicked: " + pos.x/4 + " " + pos.y/4);
+            System.out.println(gameWorld.pixelMap[pos.x/4][pos.y/4].name);
+            //gameWorld.mouseWasClicked = false;
+
+
         }
     }
+
+    public void mouseMoved(MouseEvent e)
+    {
+        Graphics2D g2     = (Graphics2D) getGraphics();
+        Point      p      = e.getPoint();
+        Shape      circle = new Ellipse2D.Double(p.getX() - RADIUS, p.getY() - RADIUS, DIAMETER, DIAMETER);
+
+        clearCircle(g2);
+
+        g2.setXORMode(XOR_COLOR);
+        g2.draw(circle);
+        g2.setPaintMode();
+
+        m_circle = circle;
+    }
+
+    private void clearCircle(Graphics2D g2)
+    {
+        if (m_circle != null)
+        {
+            g2.setXORMode(XOR_COLOR);
+            g2.draw(m_circle);
+            g2.setPaintMode();
+
+            m_circle = null;
+        }
+    }
+    public void mouseDragged(MouseEvent e)
+    {
+        Graphics2D g2     = (Graphics2D) getGraphics();
+        Point      p      = e.getPoint();
+        Shape      circle = new Ellipse2D.Double(p.getX() - RADIUS, p.getY() - RADIUS, DIAMETER, DIAMETER);
+
+        clearCircle(g2);
+
+        g2.setXORMode(XOR_COLOR);
+        g2.draw(circle);
+        g2.setPaintMode();
+
+        m_circle = circle;
+        Point pixel = e.getPoint();
+
+        if(pixel.x/4 < xWindow && pixel.x/4 > 0 && pixel.y/4 < yWindow && pixel.y/4 > 0)
+        {
+            int posx = pixel.x/4;
+            int posy = pixel.y/4;
+
+            gameWorld.mouseClicked(posx, posy);
+            /*gameWorld.mouseClicked(posx + 1, posy);
+            gameWorld.mouseClicked(posx, posy + 1);
+            gameWorld.mouseClicked(posx + 1, posy + 1);
+
+            gameWorld.mouseClicked(posx - 1, posy);
+            gameWorld.mouseClicked(posx, posy - 1);
+            gameWorld.mouseClicked(posx - 1, posy - 1);
+
+            gameWorld.mouseClicked(posx - 1, posy + 1);
+            gameWorld.mouseClicked(posx + 1, posy - 1);
+            */
+
+        }
+    }
+
 
     public void mouseEntered(MouseEvent e) {
     }

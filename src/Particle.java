@@ -1,19 +1,19 @@
-//Particle Class
+
 //Used as a structure object to store a sets of data for each in-game particle
 import java.awt.Color;
-public class Particle 
+public class Particle
 {
     public String name;
     public Color color;
-    
+
     //Pixel map coordinates
     public int x;
     public int y;
-    
+
     //Determines whether the particle falls due to gravity (not static)
     //or whether the particle stays still (static)
     public boolean isStatic;
-    
+
     public Particle()
     {
         name = "Nothing";
@@ -22,7 +22,7 @@ public class Particle
         y = 0;
         isStatic = false;
     }
-    
+
     public Particle(int xPos, int yPos)
     {
         name = "Nothing";
@@ -31,7 +31,7 @@ public class Particle
         y = yPos;
         isStatic = false;
     }
-    
+
     public Particle(String particleName, Color particleColor, boolean isItStatic)
     {
         name = particleName;
@@ -40,7 +40,7 @@ public class Particle
         y = 0;
         isStatic = isItStatic;
     }
-    
+
     public Particle(String particleName, Color particleColor, boolean isItStatic, int xPos, int yPos)
     {
         name = particleName;
@@ -49,6 +49,6 @@ public class Particle
         y = yPos;
         isStatic = isItStatic;
     }
-    
-    
+
+
 }
