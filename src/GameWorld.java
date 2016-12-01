@@ -1,6 +1,8 @@
-import java.awt.Color;
+package src;
+
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Random;
-import java.util.*;
 
 
 //TODO: Add more pixelTypes. Update ELEMENT_COUNT
@@ -12,8 +14,10 @@ public class GameWorld
     //Send this to user interface component to update user-display
     //2Darray indices represent (x,y) coordinates of each pixels
     ArrayList<Particle> existingParticles;
+    ArrayList<BranchHead> branches = new ArrayList<BranchHead>();
     final int PIXEL_MAP_HEIGHT = 800/4;
     final int PIXEL_MAP_WIDTH = 1240/4;
+    final Color BROWN = new Color(156, 93, 82);
     Particle[][] pixelMap;//(0,0) coordinates are located at the top-left of the 2D array
 
     //General-use random variable
@@ -31,11 +35,15 @@ public class GameWorld
     int clickedX, clickedY;//Stores x,y coordinates of the last point the mouse was clicked
     boolean mouseWasDragged;//Turns "true" when the visual component indicates the mouse was dragged
     int draggedX1, draggedX2, draggedY1, draggedY2;//x,y coordinates of dragging mouse's the starting point and ending point
+    Particle treeRoot;
+    static int treeY = 0;
+    static int treeHeight = 0;
 
     //Variables to keep track of custom options
     String penElement;
     boolean penDragMode;
     boolean wallCollision;
+    boolean baseMade = false;
 
     //Default constructor
     public GameWorld()
@@ -84,6 +92,7 @@ public class GameWorld
                 }
             }
         }
+
         /*for(Particle p : existingParticles)
         {
             updatePixel(p);
@@ -135,10 +144,19 @@ public class GameWorld
                     }
                     break;
                 case "Plant":
-                    //If there's nothing in the target spot, replace it with wall
+                    //If there's nothing in the target spot, replace it with plant
                     if(pixelMap[clickedX][clickedY].name.equals("Nothing"))
                     {
                         Particle p =  new Particle("Plant", Color.green, false, clickedX, clickedY);
+                        pixelMap[clickedX][clickedY] = p;
+                        existingParticles.add(p);
+                    }
+                    break;
+                case "Red":
+                    //If there's nothing in the target spot, replace it with plant
+                    if(pixelMap[clickedX][clickedY].name.equals("Nothing"))
+                    {
+                        Particle p =  new Particle("Red", Color.yellow, false, clickedX, clickedY);
                         pixelMap[clickedX][clickedY] = p;
                         existingParticles.add(p);
                     }
@@ -160,10 +178,12 @@ public class GameWorld
             return;
         }
         //Change nothing if particle doesn't fall
-        else if(thisPixel.isStatic)
+        else if(thisPixel.isStatic && !thisPixel.name.equals("Tree"))
         {
-            return;
+
+                return;
         }
+
         
         //List all fluid particles here
         if(thisPixel.name.equals("Water"))
@@ -255,7 +275,9 @@ public class GameWorld
                 //If there's no empty space and no reactive elements underneath, no changes should be made to the particle in-question
             }
             interactionsAroundParticle(thisPixel);
+
         }
+
 
 
     }
@@ -487,6 +509,106 @@ public class GameWorld
 
             }
 
+
+        }
+        else if (p.name.equals("Seed") && !baseMade){
+            int posx = p.x;
+            int posy = p.y;
+
+            //for seed checking
+            if(pixelMap[p.x + 1][p.y].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+
+            }
+            else if(pixelMap[p.x + 1][p.y + 1].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+            }
+            else if(pixelMap[p.x ][p.y + 1].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+            }
+            else if(pixelMap[p.x - 1][p.y].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+            }
+            else if(pixelMap[p.x - 1][p.y - 1].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+            }
+            else if(pixelMap[p.x ][p.y - 1].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+            }
+            else if(pixelMap[p.x + 1][p.y - 1].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+
+                removeSeed();
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+            }
+            else if(pixelMap[p.x - 1][p.y + 1].name == "Water")
+            {
+                Particle newP =  new Particle("Tree", BROWN, true, posx, posy);
+                pixelMap[posx][posy] = newP;
+                removeSeed();
+
+                existingParticles.add(newP);
+                treeRoot = newP;
+                baseMade = true;
+                treeY = posy;
+                treeHeight = 0;
+
+            }
+
         }
     }
 
@@ -514,9 +636,157 @@ public class GameWorld
         penElement = type;
     }
 
-    public void test()
+    public void createTreeBase(int x, int y)
     {
+        Particle p =  new Particle("Seed", Color.magenta, false, x, y);
+        pixelMap[x][y] = p;
+        existingParticles.add(p);
+    }
+    public void removeSeed()
+    {
+        for(int iY = PIXEL_MAP_HEIGHT-1; iY >= 0; iY--){
+            for(int iX = 0; iX < PIXEL_MAP_WIDTH; iX++){
+
+                if(pixelMap[iX][iY].name.equals("Seed"))
+                {
+                    pixelMap[iX][iY] = new Particle("Nothing", Color.black, true, iX, iY);
+                    existingParticles.remove(pixelMap[iX][iY]);
+                }
+            }
+        }
 
     }
 
+    public void growTree()
+    {
+        if(treeHeight > 45 )
+        {
+            baseMade = false;
+        }
+        else if(treeRoot != null)
+        {
+            System.out.println(treeRoot.x + "  " + treeRoot.y);
+            Particle p =  new Particle("Wall", BROWN, true, treeRoot.x, treeY);
+            pixelMap[treeRoot.x][treeY] = p;
+
+            existingParticles.add(p);
+
+            System.out.println("above " + p.x + "  " + p.y);
+
+            if(treeHeight == 15)
+            {
+                BranchHead b = new BranchHead(false,12,p.x,p.y);
+                BranchHead b2 = new BranchHead(true,12,p.x,p.y);
+                branches.add(b);
+                branches.add(b2);
+            }
+
+            if(treeHeight == 30)
+            {
+                BranchHead b = new BranchHead(false,6,p.x,p.y);
+                BranchHead b2 = new BranchHead(true,6,p.x,p.y);
+                branches.add(b);
+                branches.add(b2);
+            }
+
+            if(treeHeight == 40)
+            {
+                BranchHead b = new BranchHead(false,3,p.x,p.y);
+                BranchHead b2 = new BranchHead(true,3,p.x,p.y);
+                branches.add(b);
+                branches.add(b2);
+            }
+
+            treeY--;
+            treeHeight++;
+
+
+
+        }
+
+    }
+    public void growBranches()
+    {
+        for(BranchHead b : branches)
+        {
+            b.growLeaf();
+        }
+
+    }
+
+
+
+    class BranchHead
+    {
+
+        boolean left;
+        int thisLength;
+        int thisx;
+        int thisy;
+
+
+        public BranchHead(boolean left, int length, int x, int y)
+        {
+            this.left = left;
+            thisLength = length;
+            thisx = x;
+            thisy = y;
+        }
+        public void growLeaf()
+        {
+            if(thisLength <= 0 )
+                return;
+            else
+            {
+                if(left)
+                {
+                    Particle p =  new Particle("Wall", BROWN, true, thisx - 1, thisy - 1);
+                    pixelMap[thisx - 1][thisy - 1] = p;
+                    existingParticles.add(p);
+
+                    if(thisLength % 2 == 0) {
+                        Particle p2 = new Particle("Wall", Color.green, true, thisx - 1, thisy - 2);
+                        pixelMap[thisx - 1][thisy - 2] = p2;
+                        existingParticles.add(p2);
+                    }
+                    else
+                    {
+                        Particle p2 = new Particle("Wall", Color.green, true, thisx - 1, thisy );
+                        pixelMap[thisx - 1][thisy ] = p2;
+                        existingParticles.add(p2);
+                    }
+
+                    thisx -= 1;
+                    thisy -= 1;
+                    thisLength--;
+                }
+                else
+                {
+                    Particle p =  new Particle("Wall", BROWN, true, thisx + 1, thisy - 1);
+                    pixelMap[thisx + 1][thisy - 1] = p;
+                    existingParticles.add(p);
+
+                    if(thisLength % 2 == 0) {
+                        Particle p2 = new Particle("Wall", Color.green, true, thisx + 1, thisy - 2);
+                        pixelMap[thisx + 1][thisy - 2] = p2;
+                        existingParticles.add(p2);
+                    }
+                    else
+                    {
+                        Particle p2 = new Particle("Wall", Color.green, true, thisx + 1, thisy );
+                        pixelMap[thisx + 1][thisy ] = p2;
+                        existingParticles.add(p2);
+                    }
+
+                    thisx += 1;
+                    thisy -= 1;
+                    thisLength--;
+
+                }
+
+            }
+        }
+    }
+
 }
+

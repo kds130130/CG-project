@@ -1,6 +1,8 @@
-
+package src;
 //Used as a structure object to store a sets of data for each in-game particle
-import java.awt.Color;
+
+import java.awt.*;
+
 public class Particle
 {
     public String name;
